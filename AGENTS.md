@@ -36,7 +36,7 @@ AGENTS.md             # this file
 README.md             # points here
 ```
 
-Do not commit `.env`. Local `.env` is **not** uploaded by `vercel deploy`. Secrets live in Vercel Production env + gitignored `.env`.
+Do not commit `.env`. Local `.env` is **not** uploaded by `npx vercel --prod`. Secrets live in Vercel Production env + gitignored `.env`.
 
 Relative imports **must** use `.js` extensions (`../lib/pickQuote.js`). `"type": "module"` caused `ERR_MODULE_NOT_FOUND` / `FUNCTION_INVOCATION_FAILED` without them.
 
@@ -122,7 +122,7 @@ EMAIL_FROM=onboarding@resend.dev
 | `EMAIL_TO` | Inbox; must be the Resend account email while using the test sender |
 | `EMAIL_FROM` | `onboarding@resend.dev` until a domain is verified |
 
-Set all four on **Vercel Production**, then `npx vercel deploy --prod` so the function sees them.
+Set all four on **Vercel Production**, then `npx vercel --prod` so the function sees them.
 
 ## Setup (Resend + Vercel)
 
@@ -133,15 +133,36 @@ Already done for this project; keep for rebuilds.
 3. Put `RESEND_API_KEY` and `EMAIL_TO` in `.env`. Leave `EMAIL_FROM=onboarding@resend.dev` until a custom domain is verified.
 4. `npx vercel` / `vercel link` — create a **new** project named `quote-email` (code directory `./`, do not customize build settings).
 5. Add the four Production env vars (`vercel env add … production` or dashboard).
-6. `npx vercel deploy --prod`.
+6. `npx vercel --prod`.
 
 Later: verify a domain in Resend and change `EMAIL_FROM`.
+
+## Deploy
+
+GitHub: [https://github.com/Ericsauber1/daily-quote-email](https://github.com/Ericsauber1/daily-quote-email). Pushing to GitHub does **not** update the live cron unless the Vercel project is connected to that repo. Production today is CLI deploys.
+
+Everyday ship from this folder (already linked to `esaubers-projects/quote-email`):
+
+```bash
+npx vercel login
+npx vercel --prod
+```
+
+`npx vercel login` is once per machine/session. `npx vercel --prod` is the production deploy (same as the other app). Optional: `npm run typecheck` first.
+
+- Code directory must stay `./`. Do not deploy this tree into a different Vercel project.
+- Crons only run on the **production** alias `https://quote-email.vercel.app`.
+- After changing quotes or handler code, deploy or production keeps the old bundle.
+- After adding or changing env vars in the Vercel dashboard (Production), deploy again so the function sees them.
+- `.env` is gitignored and is not uploaded; Vercel Production env is the source of truth for the live function.
+
+First-time / rebuild: use **Setup (Resend + Vercel)** above, then this section.
 
 ## Commands
 
 ```bash
-npm run typecheck
-npx vercel deploy --prod
+npx vercel login
+npx vercel --prod
 
 set -a && source .env && set +a
 curl -H "Authorization: Bearer $CRON_SECRET" "https://quote-email.vercel.app/api/send-quote?force=1"

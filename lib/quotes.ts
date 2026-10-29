@@ -76,4 +76,8 @@ export const quotes: Quote[] = [
         quote: 'It is not that we have a short time to live, but that we waste a lot of it.',
         author: 'Seneca',
     },
+
+    { quote: 'A man can be destroyed but not defeated.', author: 'Ernest Hemingway' },
+{ quote: 'He who has a why to live can bear almost any how.', author: 'Friedrich Nietzsche' },
+{ quote: "The struggle itself toward the heights is enough to fill a man's heart.", author: 'Albert Camus' }, 
 ];
