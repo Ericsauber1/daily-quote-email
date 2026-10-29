@@ -6,14 +6,15 @@ A Vercel cron function that emails an inspirational quote every morning at 8am P
 
 ## Deploy
 
-GitHub is [Ericsauber1/daily-quote-email](https://github.com/Ericsauber1/daily-quote-email). Pushing does **not** update production unless this repo is connected in Vercel. Until then, deploy from the project folder:
+GitHub is [Ericsauber1/daily-quote-email](https://github.com/Ericsauber1/daily-quote-email). Pushing does **not** update production. Commit on `main` locally (do not merge PRs on github.com — Hobby blocks those authors), then:
 
 ```bash
 npx vercel login
-npx vercel --prod
+npm run deploy
+git push
 ```
 
-`npx vercel login` is only needed once (or if the CLI session expires). This folder is already linked to `esaubers-projects/quote-email`, so `--prod` ships production without creating a new project.
+`npx vercel login` is only needed once (or if the CLI session expires). `npm run deploy` typechecks, tests, then `vercel --prod`. This folder is already linked to `esaubers-projects/quote-email`.
 
 Use the linked project `esaubers-projects/quote-email` (code directory `./`). Do not link this folder to another Vercel app.
 
@@ -30,4 +31,4 @@ set -a && source .env && set +a
 curl -H "Authorization: Bearer $CRON_SECRET" "https://quote-email.vercel.app/api/send-quote?force=1"
 ```
 
-Expect `{ "sent": true, "author": "…" }`. Wrong or missing bearer → 401.
+Expect `{ "sent": true, "author": "…", "quoteIndex": 0 }`. Wrong or missing bearer → 401.

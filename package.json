@@ -3,13 +3,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test lib/*.test.ts",
+    "predeploy": "npm run typecheck && npm test",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "resend": "^6.4.2"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
-    "typescript": "^5.9.3"
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vercel": "^65.8.0"
   }
 }

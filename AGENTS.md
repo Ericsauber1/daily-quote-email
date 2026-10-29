@@ -14,8 +14,8 @@ A no-framework Vercel function emails one inspirational quote every morning at *
 ## Stack
 
 - TypeScript, `"type": "module"`, `strict: true`, target ES2022, module ESNext, `moduleResolution: Bundler`
-- `resend` dependency; `typescript` + `@types/node` as devDependencies
-- npm script: `"typecheck": "tsc --noEmit"`
+- `resend` dependency; `typescript` + `@types/node` + pinned `vercel` as devDependencies
+- npm scripts: `typecheck`, `test`, `deploy` (`predeploy` runs typecheck + tests)
 - Vercel Node function, Web `Request` / `Response`
 - Vercel Cron (UTC only)
 - No Next.js, no date libraries
@@ -57,11 +57,11 @@ export default {
 5. **Send** via Resend:
    - `from`: `EMAIL_FROM`
    - `to`: `EMAIL_TO`
-   - `subject`: `Quote of the day`
+   - `subject`: `Quote of the day — <Pacific short date>` e.g. `Quote of the day — Oct 30` (keeps inbox threads from collapsing)
    - `text`: `"<quote>"\n\n— <author>`
    - `html`: Georgia, larger italic quote, author below, **inline styles** (email clients ignore classes). HTML-escape quote and author.
 6. Resend failure: log and **500**. Treat **both** a thrown exception **and** `{ data, error }` as failure.
-7. Success → **200** `{ sent: true, author }`.
+7. Success → **200** `{ sent: true, author, quoteIndex }`.
 8. Non-GET → **405**. Uncaught errors → **500** `{ error: 'Internal error' }`.
 
 ## Quote selection (`lib/pickQuote.ts`, `lib/quotes.ts`)
@@ -70,7 +70,7 @@ export default {
 pickQuote(quotes, dayNumber) => quotes[dayNumber % quotes.length]
 ```
 
-Throw if the list is empty.
+Throw if the list is empty or any entry has a blank `quote` / `author` (`assertQuotes`). Runs at module load and in `pickQuote`.
 
 Shape only: `{ quote: string; author: string }` (`type` or `interface`). No extra fields.
 
@@ -112,7 +112,7 @@ The root URL is not a site. The only route is `/api/send-quote`.
 RESEND_API_KEY=
 CRON_SECRET=
 EMAIL_TO=
-EMAIL_FROM=onboarding@resend.dev
+EMAIL_FROM=Daily Quote <onboarding@resend.dev>
 ```
 
 | Name | Role |
@@ -120,7 +120,7 @@ EMAIL_FROM=onboarding@resend.dev
 | `RESEND_API_KEY` | Resend sending key (`re_…`) |
 | `CRON_SECRET` | Shared secret; generate with `openssl rand -hex 32`. Cron and `curl` tests use the same value. |
 | `EMAIL_TO` | Inbox; must be the Resend account email while using the test sender |
-| `EMAIL_FROM` | `onboarding@resend.dev` until a domain is verified |
+| `EMAIL_FROM` | `Daily Quote <onboarding@resend.dev>` until a domain is verified |
 
 Set all four on **Vercel Production**, then `npx vercel --prod` so the function sees them.
 
@@ -130,7 +130,7 @@ Already done for this project; keep for rebuilds.
 
 1. Resend account: [https://resend.com/signup](https://resend.com/signup). Sign up with the inbox that should receive quotes.
 2. API key: [https://resend.com/api-keys](https://resend.com/api-keys) — **Sending access**, copy once (`re_…`). Do not paste keys in chat; rotate if leaked.
-3. Put `RESEND_API_KEY` and `EMAIL_TO` in `.env`. Leave `EMAIL_FROM=onboarding@resend.dev` until a custom domain is verified.
+3. Put `RESEND_API_KEY` and `EMAIL_TO` in `.env`. Leave `EMAIL_FROM=Daily Quote <onboarding@resend.dev>` until a custom domain is verified.
 4. `npx vercel` / `vercel link` — create a **new** project named `quote-email` (code directory `./`, do not customize build settings).
 5. Add the four Production env vars (`vercel env add … production` or dashboard).
 6. `npx vercel --prod`.
@@ -144,11 +144,15 @@ GitHub: [https://github.com/Ericsauber1/daily-quote-email](https://github.com/Er
 Everyday ship from this folder (already linked to `esaubers-projects/quote-email`):
 
 ```bash
-npx vercel login
-npx vercel --prod
+git add -A
+git commit -m "Describe the change"
+npm run deploy
+git push
 ```
 
-`npx vercel login` is once per machine/session. `npx vercel --prod` is the production deploy (same as the other app). Optional: `npm run typecheck` first.
+`npm run deploy` runs typecheck + tests, then `vercel --prod`. `npx vercel login` is once per machine/session.
+
+**Do not merge PRs on github.com for this repo.** Hobby blocks deploys when `HEAD` is authored as `*@users.noreply.github.com` (GitHub merge commits). Commit on `main` locally as `ericjsauber@gmail.com`, deploy, then `git push`. GitHub is a backup, not the deploy trigger.
 
 - Code directory must stay `./`. Do not deploy this tree into a different Vercel project.
 - Crons only run on the **production** alias `https://quote-email.vercel.app`.
@@ -161,14 +165,15 @@ First-time / rebuild: use **Setup (Resend + Vercel)** above, then this section.
 ## Commands
 
 ```bash
-npx vercel login
-npx vercel --prod
+npm test
+npm run typecheck
+npm run deploy
 
 set -a && source .env && set +a
 curl -H "Authorization: Bearer $CRON_SECRET" "https://quote-email.vercel.app/api/send-quote?force=1"
 ```
 
-`vercel dev` is optional for local smoke tests. Expect `{ "sent": true, "author": "…" }` and one email. Wrong/missing bearer → 401.
+`vercel dev` is optional for local smoke tests. Expect `{ "sent": true, "author": "…", "quoteIndex": 0 }`. Wrong/missing bearer → 401.
 
 ## Acceptance criteria
 

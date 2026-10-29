@@ -3,6 +3,17 @@ export interface Quote {
   author: string;
 }
 
+export function assertQuotes(list: Quote[]): void {
+  if (list.length === 0) {
+    throw new Error('Quote list is empty');
+  }
+  for (const [index, item] of list.entries()) {
+    if (!item.quote.trim() || !item.author.trim()) {
+      throw new Error(`Quote at index ${index} is missing quote or author`);
+    }
+  }
+}
+
 export const quotes: Quote[] = [
   {
     quote: "It always seems impossible until it's done.",
@@ -89,3 +100,5 @@ export const quotes: Quote[] = [
     author: 'Albert Camus',
   },
 ];
+
+assertQuotes(quotes);

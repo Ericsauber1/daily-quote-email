@@ -1,7 +1,11 @@
 import { Resend } from 'resend';
-import { pickQuote } from '../lib/pickQuote.js';
+import { pickQuote, quoteIndex } from '../lib/pickQuote.js';
 import { quotes } from '../lib/quotes.js';
-import { getPacificDayNumber, getPacificHour } from '../lib/time.js';
+import {
+  getPacificDateLabel,
+  getPacificDayNumber,
+  getPacificHour,
+} from '../lib/time.js';
 
 const REQUIRED_ENV = [
   'CRON_SECRET',
@@ -53,7 +57,9 @@ async function handleGet(request: Request): Promise<Response> {
     return json({ skipped: true, reason: 'not 8am Pacific' }, 200);
   }
 
-  const quote = pickQuote(quotes, getPacificDayNumber(now));
+  const dayNumber = getPacificDayNumber(now);
+  const index = quoteIndex(quotes, dayNumber);
+  const quote = pickQuote(quotes, dayNumber);
   const text = `"${quote.quote}"\n\n— ${quote.author}`;
   const html = `<div style="font-family: Georgia, 'Times New Roman', serif; max-width: 560px; padding: 24px;">
   <p style="font-size: 22px; font-style: italic; line-height: 1.45; margin: 0 0 16px;">${escapeHtml(quote.quote)}</p>
@@ -65,7 +71,7 @@ async function handleGet(request: Request): Promise<Response> {
     const { error } = await resend.emails.send({
       from: process.env.EMAIL_FROM!,
       to: process.env.EMAIL_TO!,
-      subject: 'Quote of the day',
+      subject: `Quote of the day — ${getPacificDateLabel(now)}`,
       text,
       html,
     });
@@ -79,7 +85,7 @@ async function handleGet(request: Request): Promise<Response> {
     return json({ error: 'Failed to send email' }, 500);
   }
 
-  return json({ sent: true, author: quote.author }, 200);
+  return json({ sent: true, author: quote.author, quoteIndex: index }, 200);
 }
 
 export default {

@@ -22,3 +22,11 @@ export function getPacificDayNumber(date: Date): number {
   }).format(date);
   return Math.floor(Date.parse(`${ymd}T00:00:00Z`) / 86_400_000);
 }
+
+export function getPacificDateLabel(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC,
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+}

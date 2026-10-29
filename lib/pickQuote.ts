@@ -1,8 +1,10 @@
-import type { Quote } from './quotes.js';
+import { assertQuotes, type Quote } from './quotes.js';
+
+export function quoteIndex(quotes: Quote[], dayNumber: number): number {
+  assertQuotes(quotes);
+  return dayNumber % quotes.length;
+}
 
 export function pickQuote(quotes: Quote[], dayNumber: number): Quote {
-  if (quotes.length === 0) {
-    throw new Error('Quote list is empty');
-  }
-  return quotes[dayNumber % quotes.length]!;
+  return quotes[quoteIndex(quotes, dayNumber)]!;
 }
