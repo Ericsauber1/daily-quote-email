@@ -20,15 +20,15 @@ Use the linked project `esaubers-projects/quote-email` (code directory `./`). Do
 
 After deploy, production is `https://quote-email.vercel.app`. Cron only runs on that production deployment.
 
-**Quotes / code:** append in `lib/quotes.ts` (or other files), then the commands above. Inserting or reordering quotes jumps today’s pick.
+**Quotes / code:** edit `lib/quotes.ts` (keep the inspirational → Zen/Tao → philosophy mix; see `AGENTS.md`), then the commands above. Inserting or reordering changes which quote is today.
 
 **Env vars:** set `RESEND_API_KEY`, `CRON_SECRET`, `EMAIL_TO`, and `EMAIL_FROM` in Vercel → Project → Settings → Environment Variables → **Production**, then `npx vercel --prod` so the function picks them up. Do not commit `.env`.
 
-**Smoke test:**
+**Smoke test:** `EMAIL_FROM` in `.env` must be quoted or `source .env` fails. Then:
 
 ```bash
 set -a && source .env && set +a
 curl -H "Authorization: Bearer $CRON_SECRET" "https://quote-email.vercel.app/api/send-quote?force=1"
 ```
 
-Expect `{ "sent": true, "author": "…", "quoteIndex": 0 }`. Wrong or missing bearer → 401.
+Expect `{ "sent": true, "author": "…", "quoteIndex": N }` where `N` is today’s index. Wrong or missing bearer → 401.

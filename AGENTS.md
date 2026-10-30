@@ -72,13 +72,17 @@ pickQuote(quotes, dayNumber) => quotes[dayNumber % quotes.length]
 
 Throw if the list is empty or any entry has a blank `quote` / `author` / `description` (`assertQuotes`). Runs at module load and in `pickQuote`.
 
-Shape: `{ quote: string; author: string; description: string }`. `description` is a short meditation: context or takeaway for the day. Append new quotes at the end with all three fields.
+Shape: `{ quote: string; author: string; description: string }`.
+
+`description` is a short meditation, about two or three sentences: what the line is saying, then one concrete takeaway. End with `Today:` and a small practice. Short enough to read in the morning email.
+
+The list is a **fixed cycle**, walked in array order. It is not reshuffled each morning. Variety comes from the order in `lib/quotes.ts`: rotate **inspirational → Zen/Tao → philosophy**, and do not put the same author on neighboring entries. A clump of one tradition becomes a multi-day streak in the inbox. When adding quotes, weave them into that rotation (reshuffle the whole list if a batch would clump).
 
 `dayNumber` is **not** day-of-month or day-of-year. It is Pacific `YYYY-MM-DD` parsed as UTC midnight (`T00:00:00Z`), divided by 86_400_000 — a monotonic day count that increments at Pacific midnight (including DST transition days).
 
 Same Pacific date → same quote. Consecutive days walk the array in order, then wrap. No stored “already sent” state. Over 365 days, `365 % N` quotes appear one extra time; which ones depends on the start date, not “the last array entry.”
 
-**Append** new quotes at the end of `lib/quotes.ts` and redeploy. Inserting or reordering jumps today’s index.
+Inserting or reordering changes which quote lands on which date from the next deploy onward. That reshuffle is expected when keeping the mix; deploy after it or production keeps the old order.
 
 ## Time (`lib/time.ts`)
 
@@ -112,15 +116,17 @@ The root URL is not a site. The only route is `/api/send-quote`.
 RESEND_API_KEY=
 CRON_SECRET=
 EMAIL_TO=
-EMAIL_FROM=Daily Quote <onboarding@resend.dev>
+EMAIL_FROM="Daily Quote <onboarding@resend.dev>"
 ```
+
+Quote `EMAIL_FROM`. Unquoted, zsh `source .env` parse-errors on the spaces and `< >`, and the curl test never runs.
 
 | Name | Role |
 |---|---|
 | `RESEND_API_KEY` | Resend sending key (`re_…`) |
 | `CRON_SECRET` | Shared secret; generate with `openssl rand -hex 32`. Cron and `curl` tests use the same value. |
 | `EMAIL_TO` | Inbox; must be the Resend account email while using the test sender |
-| `EMAIL_FROM` | `Daily Quote <onboarding@resend.dev>` until a domain is verified |
+| `EMAIL_FROM` | `"Daily Quote <onboarding@resend.dev>"` until a domain is verified. Keep the quotes in `.env`. |
 
 Set all four on **Vercel Production**, then `npx vercel --prod` so the function sees them.
 
@@ -130,7 +136,7 @@ Already done for this project; keep for rebuilds.
 
 1. Resend account: [https://resend.com/signup](https://resend.com/signup). Sign up with the inbox that should receive quotes.
 2. API key: [https://resend.com/api-keys](https://resend.com/api-keys) — **Sending access**, copy once (`re_…`). Do not paste keys in chat; rotate if leaked.
-3. Put `RESEND_API_KEY` and `EMAIL_TO` in `.env`. Leave `EMAIL_FROM=Daily Quote <onboarding@resend.dev>` until a custom domain is verified.
+3. Put `RESEND_API_KEY` and `EMAIL_TO` in `.env`. Leave `EMAIL_FROM="Daily Quote <onboarding@resend.dev>"` (quoted) until a custom domain is verified.
 4. `npx vercel` / `vercel link` — create a **new** project named `quote-email` (code directory `./`, do not customize build settings).
 5. Add the four Production env vars (`vercel env add … production` or dashboard).
 6. `npx vercel --prod`.
@@ -173,7 +179,7 @@ set -a && source .env && set +a
 curl -H "Authorization: Bearer $CRON_SECRET" "https://quote-email.vercel.app/api/send-quote?force=1"
 ```
 
-`vercel dev` is optional for local smoke tests. Expect `{ "sent": true, "author": "…", "quoteIndex": 0 }`. Wrong/missing bearer → 401.
+`vercel dev` is optional for local smoke tests. Expect `{ "sent": true, "author": "…", "quoteIndex": N }` where `N` is today’s `dayNumber % quotes.length` (not always `0`). After a quote-list change, that `author` and `quoteIndex` should match a local pick — that is how to confirm production is serving the new list. Wrong/missing bearer → 401.
 
 ## Acceptance criteria
 
