@@ -8,17 +8,19 @@ test('assertQuotes accepts the real list', () => {
   assertQuotes(quotes);
 });
 
-test('assertQuotes rejects empty quote or author', () => {
-  assert.throws(() => assertQuotes([{ quote: '  ', author: 'X' }]));
-  assert.throws(() => assertQuotes([{ quote: 'X', author: '' }]));
+test('assertQuotes rejects empty quote, author, or description', () => {
+  const ok = { quote: 'X', author: 'Y', description: 'Z' };
+  assert.throws(() => assertQuotes([{ ...ok, quote: '  ' }]));
+  assert.throws(() => assertQuotes([{ ...ok, author: '' }]));
+  assert.throws(() => assertQuotes([{ ...ok, description: ' ' }]));
   assert.throws(() => assertQuotes([]));
 });
 
 test('pickQuote walks the array then wraps', () => {
   const list = [
-    { quote: 'a', author: 'A' },
-    { quote: 'b', author: 'B' },
-    { quote: 'c', author: 'C' },
+    { quote: 'a', author: 'A', description: 'da' },
+    { quote: 'b', author: 'B', description: 'db' },
+    { quote: 'c', author: 'C', description: 'dc' },
   ];
   assert.equal(pickQuote(list, 0).author, 'A');
   assert.equal(pickQuote(list, 1).author, 'B');

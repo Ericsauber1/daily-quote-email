@@ -60,10 +60,11 @@ async function handleGet(request: Request): Promise<Response> {
   const dayNumber = getPacificDayNumber(now);
   const index = quoteIndex(quotes, dayNumber);
   const quote = pickQuote(quotes, dayNumber);
-  const text = `"${quote.quote}"\n\n— ${quote.author}`;
+  const text = `"${quote.quote}"\n\n— ${quote.author}\n\n${quote.description}`;
   const html = `<div style="font-family: Georgia, 'Times New Roman', serif; max-width: 560px; padding: 24px;">
   <p style="font-size: 22px; font-style: italic; line-height: 1.45; margin: 0 0 16px;">${escapeHtml(quote.quote)}</p>
-  <p style="font-size: 16px; margin: 0;">— ${escapeHtml(quote.author)}</p>
+  <p style="font-size: 16px; margin: 0 0 20px;">— ${escapeHtml(quote.author)}</p>
+  <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 15px; font-style: normal; line-height: 1.5; color: #333; margin: 0;">${escapeHtml(quote.description)}</p>
 </div>`;
 
   try {

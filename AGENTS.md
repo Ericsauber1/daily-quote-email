@@ -58,8 +58,8 @@ export default {
    - `from`: `EMAIL_FROM`
    - `to`: `EMAIL_TO`
    - `subject`: `Quote of the day — <Pacific short date>` e.g. `Quote of the day — Oct 30` (keeps inbox threads from collapsing)
-   - `text`: `"<quote>"\n\n— <author>`
-   - `html`: Georgia, larger italic quote, author below, **inline styles** (email clients ignore classes). HTML-escape quote and author.
+   - `text`: `"<quote>"\n\n— <author>\n\n<description>`
+   - `html`: Georgia, larger italic quote, author below, then the description in smaller roman text. **Inline styles**. HTML-escape quote, author, and description.
 6. Resend failure: log and **500**. Treat **both** a thrown exception **and** `{ data, error }` as failure.
 7. Success → **200** `{ sent: true, author, quoteIndex }`.
 8. Non-GET → **405**. Uncaught errors → **500** `{ error: 'Internal error' }`.
@@ -70,9 +70,9 @@ export default {
 pickQuote(quotes, dayNumber) => quotes[dayNumber % quotes.length]
 ```
 
-Throw if the list is empty or any entry has a blank `quote` / `author` (`assertQuotes`). Runs at module load and in `pickQuote`.
+Throw if the list is empty or any entry has a blank `quote` / `author` / `description` (`assertQuotes`). Runs at module load and in `pickQuote`.
 
-Shape only: `{ quote: string; author: string }` (`type` or `interface`). No extra fields.
+Shape: `{ quote: string; author: string; description: string }`. `description` is a short meditation: context or takeaway for the day. Append new quotes at the end with all three fields.
 
 `dayNumber` is **not** day-of-month or day-of-year. It is Pacific `YYYY-MM-DD` parsed as UTC midnight (`T00:00:00Z`), divided by 86_400_000 — a monotonic day count that increments at Pacific midnight (including DST transition days).
 
